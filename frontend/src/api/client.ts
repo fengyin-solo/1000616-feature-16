@@ -1,11 +1,20 @@
-/** 统一请求封装：拼后端地址、抛网络错误、给页脚留一句可读的说明。 */
+/** 统一请求封装：拼后端地址、带操作角色、抛网络错误、给页脚留一句可读的说明。 */
 const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+const ROLE_STORAGE_KEY = 'lab-operator-role'
+
+function currentRole(): string {
+  return window.localStorage.getItem(ROLE_STORAGE_KEY) ?? 'admin'
+}
 
 export function request(path: string, init?: RequestInit): Promise<Response> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
   return fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Operator-Role': currentRole(),
+      ...init?.headers,
+    },
   }).catch((error: unknown) => {
     const detail = error instanceof Error ? error.message : '请求未送达'
     throw new Error(`接口请求失败：${detail}`)
